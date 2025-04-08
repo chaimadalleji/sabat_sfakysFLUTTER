@@ -1,57 +1,102 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:sabat_sfakys/models/Article.dart';
 import 'package:sabat_sfakys/models/couleur.dart';
 import 'package:sabat_sfakys/models/pointure.dart';
+import 'token_service.dart'; // Service pour stocker et récupérer le token
 
 class ArticleService {
-  final String apiUrl = 'http://localhost:8080/article';
+  final String baseUrl = 'http://localhost:8080';
+  late Dio dio;
+
+  ArticleService() {
+    dio = Dio(BaseOptions(
+      baseUrl: baseUrl,
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
+      contentType: "application/json",
+    ));
+    _setupInterceptor();
+  }
+
+  // Configuration de l'intercepteur pour ajouter automatiquement le token
+  void _setupInterceptor() {
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          String? token = await TokenService.getToken();
+          if (token != null) {
+            options.headers["Authorization"] = "Bearer $token";
+          }
+          print("📤 Requête envoyée : ${options.method} ${options.path}");
+          return handler.next(options);
+        },
+        onResponse: (response, handler) {
+          print("📥 Réponse reçue : ${response.statusCode}");
+          return handler.next(response);
+        },
+        onError: (DioException e, handler) {
+          print("🚨 Erreur HTTP : ${e.response?.statusCode} - ${e.message}");
+          // Si on reçoit une erreur 403 Forbidden, cela signifie probablement que le token est invalide
+          if (e.response?.statusCode == 403) {
+            print("⚠️ Accès refusé. Vérifiez que votre token est valide.");
+          }
+          return handler.next(e);
+        },
+      ),
+    );
+  }
 
   // Fetch a list of articles
   Future<List<Article>> getArticles() async {
-    final response = await http.get(Uri.parse(apiUrl));
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
+    try {
+      final response = await dio.get('/article');
+      final List<dynamic> data = response.data;
       return data.map((article) => Article.fromJson(article)).toList();
-    } else {
+    } catch (e) {
+      print("❌ Erreur lors de la récupération des articles : $e");
       throw Exception('Failed to load articles');
     }
   }
 
   // Method to create an article
   Future<int> create(Article article) async {
-    final response = await http.post(
-      Uri.parse('$apiUrl/create'),
-      body: json.encode(article.toJson()), // Make sure the article has a `toJson` method
-      headers: {'Content-Type': 'application/json'},
-    );
-    
-    if (response.statusCode == 200) {
-      // Assuming the backend returns an ID or success status in the response body
-      return json.decode(response.body)['id'];  // Assuming the API returns the ID of the created article
-    } else {
-      throw Exception('Failed to create article');
+    try {
+      final response = await dio.post(
+        '/article/create',
+        data: article.toJson(),
+      );
+      
+      if (response.statusCode == 200) {
+        return response.data['id'];  // Assuming the API returns the ID of the created article
+      } else {
+        throw Exception('Failed to create article');
+      }
+    } catch (e) {
+      print("❌ Erreur lors de la création de l'article : $e");
+      throw Exception('Failed to create article: $e');
     }
   }
 
   // Fetch list of colors
   Future<List<Couleur>> getCouleurs() async {
-    final response = await http.get(Uri.parse('http://localhost:8080/couleurs'));
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
+    try {
+      final response = await dio.get('/article/couleurs');
+      final List<dynamic> data = response.data;
       return data.map((e) => Couleur.fromJson(e)).toList();
-    } else {
+    } catch (e) {
+      print("❌ Erreur lors du chargement des couleurs : $e");
       throw Exception('Erreur lors du chargement des couleurs');
     }
   }
 
   // Fetch list of sizes (Pointure)
   Future<List<Pointure>> getPointures() async {
-    final response = await http.get(Uri.parse('http://localhost:8080/pointures'));
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
+    try {
+      final response = await dio.get('/article/pointures');
+      final List<dynamic> data = response.data;
       return data.map((e) => Pointure.fromJson(e)).toList();
-    } else {
+    } catch (e) {
+      print("❌ Erreur lors du chargement des pointures : $e");
       throw Exception('Erreur lors du chargement des pointures');
     }
   }
