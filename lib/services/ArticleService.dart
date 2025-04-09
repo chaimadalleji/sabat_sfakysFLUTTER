@@ -58,6 +58,37 @@ class ArticleService {
     }
   }
 
+  // NOUVELLE MÉTHODE: Récupère toutes les photos des articles
+  Future<List<String>> getAllPhotos() async {
+    try {
+      // Obtenir tous les articles d'abord
+      final articles = await getArticles();
+      
+      // Extraire toutes les photos de tous les articles
+      final List<String> allPhotos = [];
+      for (var article in articles) {
+        allPhotos.addAll(article.photos);
+      }
+      
+      // Retourner la liste complète de photos
+      return allPhotos;
+    } catch (e) {
+      print("❌ Erreur lors de la récupération des photos : $e");
+      throw Exception('Failed to load photos');
+    }
+  }
+  
+  // Ajout d'une méthode pour récupérer un article par ID
+  Future<Article> getArticleById(int id) async {
+    try {
+      final response = await dio.get('/article/$id');
+      return Article.fromJson(response.data);
+    } catch (e) {
+      print("❌ Erreur lors de la récupération de l'article $id : $e");
+      throw Exception('Failed to load article with id $id');
+    }
+  }
+
   // Method to create an article
   Future<int> create(Article article) async {
     try {

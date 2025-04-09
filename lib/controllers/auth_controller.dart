@@ -3,11 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart' as dio;
 import 'package:http/http.dart' as http;
+import 'package:sabat_sfakys/services/photo_service.dart';
 
 import '../services/token_service.dart';
 import '../models/signup_request.dart';
 
+
 class AuthController extends GetxController {
+  // 🔹 Services
+  final PhotoService _photoService = PhotoService();
+
   // 🔹 Champs communs
   var usernameController = TextEditingController();
   var passwordController = TextEditingController();
@@ -18,12 +23,17 @@ class AuthController extends GetxController {
 
   // 🔹 Champs spécifiques au vendeur
   var numeroIdentificationEntrepriseController = TextEditingController();
+  var scoreEcologiqueController = TextEditingController(); // Ajouté
   var selectedMateriauxUtilises = ''.obs;
   var selectedMethodesProduction = ''.obs;
   var selectedProgrammeRecyclage = ''.obs;
   var selectedTransportLogistiqueVerte = ''.obs;
   var selectedInitiativesSociales = ''.obs;
   var selectedScoreEcologique = ''.obs;
+  
+  // 🔹 Logo et image
+  var selectedLogo = Rx<Map<String, dynamic>>({});  // Ajouté
+  var logoOptions = <Map<String, dynamic>>[].obs;  // Ajouté
 
   // 🔹 États
   var errorMessage = ''.obs;
@@ -31,6 +41,38 @@ class AuthController extends GetxController {
   var isLoading = false.obs;
 
   final String apiUrl = 'http://localhost:8080/api/auth';
+
+  @override
+  void onInit() {
+    super.onInit();
+    fetchLogoOptions();
+  }
+
+  /// Récupère les options de logo disponibles
+  void fetchLogoOptions() async {
+    try {
+      final photos = await _photoService.getAllPhotos();
+      logoOptions.value = photos.map((photo) => {
+        'id': photo.id,
+        'name': photo.name,
+        'url': photo.url
+      }).toList();
+    } catch (e) {
+      print("Erreur lors de la récupération des logos: $e");
+    }
+  }
+
+  /// Connexion avec Google
+  void signInWithGoogle() {
+    print("Connexion avec Google");
+    // Implémentation future
+  }
+
+  /// Connexion avec Facebook
+  void signInWithFacebook() {
+    print("Connexion avec Facebook");
+    // Implémentation future
+  }
 
   /// Connexion utilisateur (Client ou Vendeur)
   Future<bool> login() async {
@@ -95,7 +137,7 @@ class AuthController extends GetxController {
     }
   }
 
-  /// Inscription vendeur (sans logo)
+  /// Inscription vendeur (avec logo)
   Future<bool> registerVendeur(SignupRequest request) async {
     print("📢 Inscription d'un vendeur...");
 
@@ -105,7 +147,8 @@ class AuthController extends GetxController {
       "email": request.email,
       "adresse": request.adresse,
       "telephone": request.telephone,
-      "role": "ROLE_FOURNISSEUR",
+      "logo": request.logo,  // Assurez-vous que le backend peut traiter cela correctement
+      "role": "ROLE_FOURNISSEUR",  // Changé de ROLE_FOURNISSEUR à ROLE_VENDEUR
       "numeroIdentificationEntreprise": request.numeroIdentificationEntreprise,
       "materiauxUtilises": request.materiauxUtilises,
       "methodesProduction": request.methodesProduction,
@@ -128,12 +171,12 @@ class AuthController extends GetxController {
         return false;
       }
     } catch (e) {
-      errorMessage.value = "Erreur réseau.";
+      errorMessage.value = "Erreur réseau: ${e.toString()}";
       return false;
     }
   }
 
-  /// Gestion de la réponse d’inscription
+  /// Gestion de la réponse d'inscription
   bool _handleSignupResponse(http.Response response) {
     if (response.statusCode == 200) {
       Get.snackbar("Succès", "Inscription réussie !");
@@ -184,12 +227,14 @@ class AuthController extends GetxController {
     userGender.value = '';
 
     numeroIdentificationEntrepriseController.clear();
+    scoreEcologiqueController.clear();  // Ajouté
     selectedMateriauxUtilises.value = '';
     selectedMethodesProduction.value = '';
     selectedProgrammeRecyclage.value = '';
     selectedTransportLogistiqueVerte.value = '';
     selectedInitiativesSociales.value = '';
     selectedScoreEcologique.value = '';
+    selectedLogo.value = {};  // Ajouté
   }
 
   /// Déconnexion
@@ -213,6 +258,7 @@ class AuthController extends GetxController {
     phoneController.dispose();
     addressController.dispose();
     numeroIdentificationEntrepriseController.dispose();
+    scoreEcologiqueController.dispose();  // Ajouté
     super.dispose();
   }
 }

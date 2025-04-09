@@ -1,21 +1,30 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:sabat_sfakys/models/photo.dart';
-import 'api_service.dart'; // Utilisation de ApiService pour les requêtes
+import 'package:sabat_sfakys/services/api_service.dart'; // Votre API service existant
 
 class PhotoService {
-  // URL de base pour l'API
-  final String baseUrl =  'http://localhost:8080';  // Remplace cette adresse par celle de ton serveur
-  final String baseUrl2 ='http://localhost:8080/photo'; 
-  // 📌 Upload une photo
-  Future<String?> uploadPhoto(File file) async {
+  // URL de base - utilise celle de votre ApiService
+  final String baseUrl = ApiService.dio.options.baseUrl;
+
+  // 📌 Upload une photo avec suivi de progression
+  Future<String?> uploadPhoto(File file, {Function(double)? onProgress}) async {
     try {
       FormData formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(file.path, filename: file.path.split('/').last),
       });
 
-      // Utilisation de l'URL de base pour l'upload
-      Response response = await ApiService.dio.post("$baseUrl/photo/upload", data: formData);
+      // Utiliser l'instance de Dio de votre ApiService existant
+      Response response = await ApiService.dio.post(
+        "photo/upload", // On utilise les chemins relatifs car baseUrl est déjà défini
+        data: formData,
+        onSendProgress: (sent, total) {
+          if (onProgress != null && total != 0) {
+            onProgress(sent / total);
+          }
+        }
+      );
+      
       print("✅ Upload réussi : ${response.data}");
       return response.data['message'];
     } catch (e) {
@@ -27,8 +36,7 @@ class PhotoService {
   // 📌 Supprimer une photo
   Future<String?> deletePhoto(String fileName) async {
     try {
-      // Utilisation de l'URL de base pour la suppression
-      Response response = await ApiService.dio.delete("$baseUrl/photo/delete/$fileName");
+      Response response = await ApiService.dio.delete("photo/delete/$fileName");
       print("✅ Suppression réussie : ${response.data}");
       return response.data['message'];
     } catch (e) {
@@ -40,11 +48,22 @@ class PhotoService {
   // 📌 Récupérer toutes les photos
   Future<List<Photo>> getAllPhotos() async {
     try {
-      // Utilisation de l'URL de base pour récupérer les photos
-      Response response = await ApiService.dio.get("$baseUrl/photo");
+      Response response = await ApiService.dio.get("photo");
       List<dynamic> data = response.data;
       print("✅ Photos récupérées : ${data.length}");
-      return data.map((json) => Photo.fromJson(json)).toList();
+      
+      return data.map((json) {
+        Photo photo = Photo.fromJson(json);
+        // Assurer que l'URL est complète
+        if (!photo.url.startsWith('http')) {
+          photo = Photo(
+            id: photo.id,
+            name: photo.name,
+            url: '${baseUrl}uploads/${photo.name}'
+          );
+        }
+        return photo;
+      }).toList();
     } catch (e) {
       print("❌ Erreur lors de la récupération des photos : $e");
       return [];
