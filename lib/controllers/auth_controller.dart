@@ -5,6 +5,8 @@ import 'package:dio/dio.dart' as dio;
 import 'package:http/http.dart' as http;
 import 'package:sabat_sfakys/services/photo_service.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../services/token_service.dart';
 import '../models/signup_request.dart';
 
@@ -216,6 +218,35 @@ class AuthController extends GetxController {
       return false;
     }
   }
+
+// Cette méthode récupère les photos uploadées depuis SharedPreferences
+// et les transforme en options de logo pour le dropdown dans RegisterVendeurView
+void updateLogoOptions() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    String? photosJson = prefs.getString('uploaded_photos');
+    
+    if (photosJson != null) {
+      List<dynamic> photos = jsonDecode(photosJson);
+      
+      // Convertir les photos en options de logo
+      List<Map<String, dynamic>> logos = photos.map((photo) {
+        return {
+          'id': photo['id'],
+          'name': photo['name'],
+          'data': photo['data'],
+          'url': photo['url'] ?? '', // URL du serveur si disponible
+        };
+      }).toList().cast<Map<String, dynamic>>();
+      
+      // Mettre à jour les options de logo
+      logoOptions.clear();
+      logoOptions.addAll(logos);
+    }
+  } catch (e) {
+    print('Erreur lors de la mise à jour des logos: $e');
+  }
+}
 
   /// Nettoyage des champs
   void clearFields() {

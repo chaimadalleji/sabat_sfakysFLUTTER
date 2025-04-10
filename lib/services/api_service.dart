@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'dart:io'; // Add this import for File class
 import 'token_service.dart'; // Service pour stocker et récupérer le token
 
 class ApiService {
@@ -41,6 +42,35 @@ class ApiService {
       return response;
     } catch (e) {
       print("❌ Erreur lors de l'envoi de la requête : $e");
+      return null;
+    }
+  }
+
+  // 📤 Méthode pour uploader un fichier
+  static Future<Response?> uploadFile(File file, String endpoint) async {
+    try {
+      String fileName = file.path.split('/').last;
+      FormData formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(file.path, filename: fileName),
+      });
+      // Option pour suivre la progression
+      Response response = await dio.post(
+        endpoint,
+        data: formData,
+        options: Options(
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        ),
+        onSendProgress: (int sent, int total) {
+          print("📤 Progression: ${(sent / total * 100).toStringAsFixed(0)}%");
+        },
+      );
+      
+      print("✅ Fichier téléchargé avec succès");
+      return response;
+    } catch (e) {
+      print("❌ Erreur lors de l'upload du fichier : $e");
       return null;
     }
   }

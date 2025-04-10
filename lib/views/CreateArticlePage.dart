@@ -9,6 +9,7 @@ import 'package:sabat_sfakys/services/category_service.dart';
 import 'package:sabat_sfakys/services/photo_service.dart';
 import 'package:sabat_sfakys/services/token_service.dart';
 
+
 class CreateArticlePage extends StatefulWidget {
   @override
   _CreateArticlePageState createState() => _CreateArticlePageState();
@@ -411,7 +412,7 @@ Card(
                     final photo = allPhotos[index];
                     final isSelected = selectedPhotos.contains(photo);
                     // Construire l'URL complète pour l'image
-                    final imageUrl = 'http://localhost:8080/uploads/${photo.name}';
+                    final imageUrl = 'http://localhost:8080/upload/${photo.name}';
                     
                     return Padding(
                       padding: EdgeInsets.only(right: 8),

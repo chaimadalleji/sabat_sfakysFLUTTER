@@ -36,7 +36,10 @@ dependencies:
   image_picker: ^1.0.7
   get_storage: ^2.1.1
   dio: ^5.3.2  # Vérifie la dernière version sur pub.dev
+  file_picker: ^5.5.0   # Pour sélectionner des fichiers
+  path: ^1.8.3          # Pour la manipulation des chemins de fichiers
   path_provider: ^2.1.1
+  shared_preferences: ^2.5.3
 dev_dependencies:
   flutter_test:
     sdk: flutter

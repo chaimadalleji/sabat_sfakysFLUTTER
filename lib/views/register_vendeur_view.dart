@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'dart:convert';
 
 import '../controllers/auth_controller.dart';
 import '../models/signup_request.dart';
@@ -17,6 +18,9 @@ class RegisterVendeurView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Mettre à jour les logos au chargement
+    authController.updateLogoOptions();
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text("Inscription Vendeur"),
@@ -24,6 +28,18 @@ class RegisterVendeurView extends StatelessWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Get.offNamed('/accueil'),
         ),
+        actions: [
+          // Bouton pour uploader un logo
+          IconButton(
+            icon: const Icon(Icons.add_photo_alternate),
+            onPressed: () async {
+              await Get.toNamed('/upload-photo');
+              // Mettre à jour les logos après le retour
+              authController.updateLogoOptions();
+            },
+            tooltip: 'Ajouter un logo',
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -87,27 +103,81 @@ class RegisterVendeurView extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               
-              // Sélection du logo
-              Obx(() => DropdownButtonFormField<Map<String, dynamic>>(
-                value: authController.selectedLogo.value.isEmpty 
-                    ? null 
-                    : authController.selectedLogo.value,
-                items: authController.logoOptions.map((logo) {
-                  return DropdownMenuItem<Map<String, dynamic>>(
-                    value: logo,
-                    child: Text(logo['name'] ?? 'Logo sans nom'),
+              // Affichage du logo sélectionné (aperçu)
+              Obx(() {
+                if (authController.selectedLogo.value.isNotEmpty && 
+                    authController.selectedLogo.value.containsKey('data')) {
+                  return Container(
+                    height: 120,
+                    width: 120,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.memory(
+                        base64Decode(authController.selectedLogo.value['data']),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                   );
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) {
-                    authController.selectedLogo.value = value;
-                  }
-                },
-                decoration: const InputDecoration(
-                  labelText: "Sélectionnez un logo",
-                  border: OutlineInputBorder(),
-                ),
-              )),
+                }
+                return const SizedBox(height: 0);
+              }),
+              
+              // Sélection du logo
+              Row(
+                children: [
+                  Expanded(
+                    child: Obx(() => DropdownButtonFormField<Map<String, dynamic>>(
+                      value: authController.selectedLogo.value.isEmpty 
+                          ? null 
+                          : authController.selectedLogo.value,
+                      items: authController.logoOptions.map((logo) {
+                        return DropdownMenuItem<Map<String, dynamic>>(
+                          value: logo,
+                          child: Row(
+                            children: [
+                              // Miniature du logo si disponible
+                              if (logo.containsKey('data')) 
+                                Container(
+                                  width: 30,
+                                  height: 30,
+                                  margin: const EdgeInsets.only(right: 8),
+                                  child: Image.memory(
+                                    base64Decode(logo['data']),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              // Nom du logo
+                              Text(logo['name'] ?? 'Logo sans nom'),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          authController.selectedLogo.value = value;
+                        }
+                      },
+                      decoration: const InputDecoration(
+                        labelText: "Sélectionnez un logo",
+                        border: OutlineInputBorder(),
+                      ),
+                    )),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add_photo_alternate),
+                    onPressed: () async {
+                      await Get.toNamed('/upload-photo');
+                      authController.updateLogoOptions();
+                    },
+                    tooltip: 'Ajouter un logo',
+                  ),
+                ],
+              ),
               const SizedBox(height: 16),
 
               TextField(
