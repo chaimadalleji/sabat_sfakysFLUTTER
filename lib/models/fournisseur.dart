@@ -9,6 +9,13 @@ class Fournisseur {
   String motDePasse;
   String statut;
   Photo logo;
+  String numeroIdentificationEntreprise;
+  String materiauxUtilises;
+  String methodesProduction;
+  String programmeRecyclage;
+  String transportLogistiqueVerte;
+  String initiativesSociales;
+  double scoreEcologique;
 
   Fournisseur({
     required this.id,
@@ -19,18 +26,32 @@ class Fournisseur {
     required this.motDePasse,
     required this.statut,
     required this.logo,
+    required this.numeroIdentificationEntreprise,
+    required this.materiauxUtilises,
+    required this.methodesProduction,
+    required this.programmeRecyclage,
+    required this.transportLogistiqueVerte,
+    required this.initiativesSociales,
+    required this.scoreEcologique,
   });
 
   factory Fournisseur.fromJson(Map<String, dynamic> json) {
     return Fournisseur(
-      id: json['id'],
-      nom: json['nom'],
-      email: json['email'],
-      adresse: json['adresse'],
-      telephone: json['telephone'],
-      motDePasse: json['motDePasse'],
-      statut: json['statut'],
-      logo: Photo.fromJson(json['logo']),
+      id: json['id'] ?? 0,
+      nom: json['nom'] ?? '',
+      email: json['email'] ?? '',
+      adresse: json['adresse'] ?? '',
+      telephone: json['telephone'] ?? '',
+      motDePasse: json['motDePasse'] ?? '',
+      statut: json['statut'] ?? 'EN_ATTENTE',
+      logo: Photo.fromJson(json['logo'] ?? {}),
+      numeroIdentificationEntreprise: json['numeroIdentificationEntreprise'] ?? '',
+      materiauxUtilises: json['materiauxUtilises'] ?? '',
+      methodesProduction: json['methodesProduction'] ?? '',
+      programmeRecyclage: json['programmeRecyclage'] ?? '',
+      transportLogistiqueVerte: json['transportLogistiqueVerte'] ?? '',
+      initiativesSociales: json['initiativesSociales'] ?? '',
+      scoreEcologique: (json['scoreEcologique'] ?? 0.0).toDouble(),
     );
   }
 
@@ -44,6 +65,13 @@ class Fournisseur {
       'motDePasse': motDePasse,
       'statut': statut,
       'logo': logo.toJson(),
+      'numeroIdentificationEntreprise': numeroIdentificationEntreprise,
+      'materiauxUtilises': materiauxUtilises,
+      'methodesProduction': methodesProduction,
+      'programmeRecyclage': programmeRecyclage,
+      'transportLogistiqueVerte': transportLogistiqueVerte,
+      'initiativesSociales': initiativesSociales,
+      'scoreEcologique': scoreEcologique,
     };
   }
 }
